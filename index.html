@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Masjid Al Muslim - Mode Fullscreen</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; overflow: hidden; height: 100vh; width: 100vw; }
+        
+        /* TOMBOL KONTROL SIMULASI JAM (Hanya untuk Tes) */
+        .panel-simulasi { background: #111; padding: 10px; border-radius: 10px; display: inline-block; margin-bottom: 20px; border: 1px dashed #444; position: relative; z-index: 999; }
+        .panel-simulasi span { font-size: 14px; color: #aaa; margin-right: 10px; font-family: Arial; }
+        .btn-sim { background: #222; color: #fff; border: 1px solid #555; padding: 6px 12px; margin: 0 4px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .btn-sim:hover { background: #00ff88; color: #000; border-color: #00ff88; }
+        .btn-reset { background: #ff3333; color: #fff; border: none; }
+        .btn-reset:hover { background: #cc0000; color: #fff; }
+
+        /* TAMPILAN UTAMA TV (Ukuran Dioptimalkan untuk Layar Penuh) */
+        h1 { font-size: 6vw; color: #00ff88; margin-top: 10px; margin-bottom: 5px; text-shadow: 0 0 15px rgba(0,255,136,0.4); text-transform: uppercase; }
+        #tgl { font-size: 2.8vw; color: #ccc; margin-bottom: 10px; }
+        #jam { font-size: 7vw; font-weight: bold; margin-bottom: 25px; }
+        .kedip { animation: blink 1s steps(2, start) infinite; }
+        @keyframes blink { to { visibility: hidden; } }
+        
+        /* KOTAK DISPLAY JADWAL SHOLAT */
+        .box { background: #111; padding: 40px; border-radius: 25px; max-width: 1200px; margin: 0 auto; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .box h2 { font-size: 5vw; color: #00ff88; margin-bottom: 15px; }
+        .box p { font-size: 3.5vw; margin: 15px 0; }
+        .siaga { font-size: 3.2vw; color: #333; font-weight: bold; margin-top: 8vh; text-transform: uppercase; letter-spacing: 2px; }
+        
+        /* ADAPTASI RESPONSIF DI LAYAR HP */
+        @media (max-width: 768px) {
+            body { overflow-y: auto; padding: 10px; }
+            h1 { font-size: 32px; }
+            #tgl { font-size: 18px; }
+            #jam { font-size: 42px; margin-bottom: 15px; }
+            .box { padding: 20px; border-radius: 12px; }
+            .box h2 { font-size: 26px; margin-bottom: 8px; }
+            .box p { font-size: 18px; margin: 6px 0; }
+            .siaga { font-size: 20px; margin-top: 50px; }
+            .panel-simulasi { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+            .panel-simulasi span { width: 100%; margin-bottom: 5px; margin-right: 0; }
+        }
+    </style>
+</head>
+<body onclick="aktifkanLayarPenuh()">
+
+    <!-- PANEL TOMBOL UNTUK SIMULASI MAJUIN JAM -->
+    <div class="panel-simulasi" onclick="event.stopPropagation()">
+        <span>⚙️ KONTROL SIMULASI:</span>
+        <button class="btn-sim" onclick="tambahJam(1)">+1 Jam</button>
+        <button class="btn-sim" onclick="tambahMenit(5)">+5 Menit</button>
+        <button class="btn-sim" onclick="tambahMenit(1)">+1 Menit</button>
+        <button class="btn-sim btn-reset" onclick="resetWaktuNyata()">Reset Waktu Nyata</button>
+    </div>
+
+    <h1>MASJID AL MUSLIM</h1>
+    <div id="tgl">Memuat Hari...</div>
+    <div id="jam">00:00:<span class="kedip">00</span></div>
+    <div id="konten"></div>
+
+<script>
+// --- DATA JADWAL SHOLAT PERMANEN ---
+var jadwalMasjid = [
+    { H: 1, J: "04:45", K: "SHOLAT SUBUH", I: "Ust. Ahmad Syakir", B: "Badal Kosong" },
+    { H: 1, J: "12:00", K: "SHOLAT DZUHUR", I: "Ust. H. Nurhalim", B: "Ust. Bashir" },
+    { H: 1, J: "15:15", K: "SHOLAT ASHAR", I: "Ust. Rahmat Hidayat", B: "Badal Kosong" },
+    { H: 1, J: "18:15", K: "SHOLAT MAGHRIB", I: "Ust. Dr. Syarifuddin", B: "Badal Kosong" },
+    { H: 1, J: "19:30", K: "SHOLAT ISYA", I: "Ust. M. Fahri", B: "Badal Kosong" },
+
+    { H: 5, J: "04:45", K: "SHOLAT SUBUH", I: "Ust. Ahmad Syakir", B: "Badal Kosong" },
+    { H: 5, J: "12:00", K: "SHOLAT JUM'AT", I: "Ust. KH. Ma'ruf", B: "Ust. Bashir" },
+    { H: 5, J: "15:15", K: "SHOLAT ASHAR", I: "Ust. Rahmat Hidayat", B: "Badal Kosong" },
+    { H: 5, J: "18:15", K: "SHOLAT MAGHRIB", I: "Ust. Dr. Syarifuddin", B: "Badal Kosong" },
+    { H: 5, J: "19:30", K: "SHOLAT ISYA", I: "Ust. M. Fahri", B: "Badal Kosong" }
+];
+
+var tambahanMilidetik = 0;
+var modeSimulasiAktif = false;
+
+// LOGIKA FULLSCREEN OTOMATIS SAAT LAYAR DIKLIK / DISENTUH
+function aktifkanLayarPenuh() {
+    var doc = document.documentElement;
+    if (!document.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+        if (doc.requestFullscreen) { doc.requestFullscreen(); }
+        else if (doc.mozRequestFullScreen) { doc.mozRequestFullScreen(); }
+        else if (doc.webkitRequestFullscreen) { doc.webkitRequestFullscreen(); }
+        else if (doc.msRequestFullscreen) { doc.msRequestFullscreen(); }
+    }
+}
+
+function tambahJam(jumlahJam) {
+    tambahanMilidetik += jumlahJam * 60 * 60 * 1000;
+    modeSimulasiAktif = true;
+    jalankanTV();
+}
+
+function tambahMenit(jumlahMenit) {
+    tambahanMilidetik += jumlahMenit * 60 * 1000;
+    modeSimulasiAktif = true;
+    jalankanTV();
+}
+
+function resetWaktuNyata() {
+    tambahanMilidetik = 0;
+    modeSimulasiAktif = false;
+    jalankanTV();
+}
+
+function jalankanTV() {
+    var waktuMurni = new Date();
+    var waktu = new Date(waktuMurni.getTime() + tambahanMilidetik);
+    
+    var hariInput = waktu.getDay();
+    var hariIni = (hariInput === 0) ? 7 : hariInput;
+    
+    var j = String(waktu.getHours()).padStart(2, '0');
+    var m = String(waktu.getMinutes()).padStart(2, '0');
+    var s = String(waktu.getSeconds()).padStart(2, '0');
+    var menitSekarang = (waktu.getHours() * 60) + waktu.getMinutes();
+    
+    var namaHari = ["", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu", "Ahad"];
+    var namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    
+    var penandaSimulasi = modeSimulasiAktif ? " <span style='font-size:2vw;color:#ff3333;'>[SIMULASI]</span>" : "";
+    document.getElementById("jam").innerHTML = j + ":" + m + ":<span class='kedip'>" + s + "</span>" + penandaSimulasi;
+    document.getElementById("tgl").innerText = namaHari[hariIni] + ", " + waktu.getDate() + " " + namaBulan[waktu.getMonth()] + " " + waktu.getFullYear();
+    
+    var jadwalAktif = null;
+    for (var i = 0; i < jadwalMasjid.length; i++) {
+        var slot = jadwalMasjid[i];
+        if (slot.H === hariIni) {
+            var jamTarget = parseInt(slot.J.substring(0, 2), 10);
+            var menitTarget = parseInt(slot.J.substring(3, 5), 10);
+            var menitJadwal = (jamTarget * 60) + menitTarget;
+            
+            var selisih = menitJadwal - menitSekarang;
+            if (selisih >= -10 && selisih <= 7) {
+                jadwalAktif = slot;
+                break;
+            }
+        }
+    }
+    
+    var areaKonten = document.getElementById("konten");
+    if (jadwalAktif) {
+        areaKonten.innerHTML = "<div class='box'>" +
+            "<h2>" + jadwalAktif.K + "</h2>" +
+            "<p>Imam: " + jadwalAktif.I + "</p>" +
+            "<p>Badal: " + jadwalAktif.B + "</p>" +
+        "</div>";
+    } else {
+        areaKonten.innerHTML = "<div class='siaga'>TULUSKAN NIAT, TEGAKKAN SHOLAT</div>";
+    }
+}
+
+window.onload = function() {
+    jalankanTV();
+    setInterval(function() {
+        if (!modeSimulasiAktif) {
+            jalankanTV();
+        } else {
+            var waktuMurni = new Date();
+            var waktu = new Date(waktuMurni.getTime() + tambahanMilidetik);
+            var s = String(waktu.getSeconds()).padStart(2, '0');
+            var j = String(waktu.getHours()).padStart(2, '0');
+            var m = String(waktu.getMinutes()).padStart(2, '0');
+            document.getElementById("jam").innerHTML = j + ":" + m + ":<span class='kedip'>" + s + "</span> <span style='font-size:2vw;color:#ff3333;'>[SIMULASI]</span>";
+        }
+    }, 1000);
+};
+</script>
+
+</body>
+</html>
