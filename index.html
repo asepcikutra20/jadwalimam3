@@ -62,18 +62,19 @@
 
 <script>
 // --- DATA JADWAL SHOLAT PERMANEN ---
+// Ditambahkan properti B2 untuk menyimpan Badal 2
 var jadwalMasjid = [
-    { H: 1, J: "04:45", K: "SHOLAT SUBUH", I: "Ust. Ahmad Syakir", B: "Badal Kosong" },
-    { H: 1, J: "12:00", K: "SHOLAT DZUHUR", I: "Ust. H. Nurhalim", B: "Ust. Bashir" },
-    { H: 1, J: "15:15", K: "SHOLAT ASHAR", I: "Ust. Rahmat Hidayat", B: "Badal Kosong" },
-    { H: 1, J: "18:15", K: "SHOLAT MAGHRIB", I: "Ust. Dr. Syarifuddin", B: "Badal Kosong" },
-    { H: 1, J: "19:30", K: "SHOLAT ISYA", I: "Ust. M. Fahri", B: "Badal Kosong" },
+    { H: 1, J: "04:45", K: "SHOLAT SUBUH", I: "Ust. Ahmad Syakir", B: "Badal Kosong", B2: "Badal Kosong" },
+    { H: 1, J: "12:00", K: "SHOLAT DZUHUR", I: "Ust. H. Nurhalim", B: "Ust. Bashir", B2: "Badal Kosong" },
+    { H: 1, J: "15:15", K: "SHOLAT ASHAR", I: "Ust. Rahmat Hidayat", B: "Badal Kosong", B2: "Badal Kosong" },
+    { H: 1, J: "18:15", K: "SHOLAT MAGHRIB", I: "Ust. Dr. Syarifuddin", B: "Badal Kosong", B2: "Badal Kosong" },
+    { H: 1, J: "19:30", K: "SHOLAT ISYA", I: "Ust. M. Fahri", B: "Badal Kosong", B2: "Badal Kosong" },
 
-    { H: 5, J: "04:45", K: "SHOLAT SUBUH", I: "Ust. Ahmad Syakir", B: "Badal Kosong" },
-    { H: 5, J: "12:00", K: "SHOLAT JUM'AT", I: "Ust. KH. Ma'ruf", B: "Ust. Bashir" },
-    { H: 5, J: "15:15", K: "SHOLAT ASHAR", I: "Ust. Rahmat Hidayat", B: "Badal Kosong" },
-    { H: 5, J: "18:15", K: "SHOLAT MAGHRIB", I: "Ust. Dr. Syarifuddin", B: "Badal Kosong" },
-    { H: 5, J: "19:30", K: "SHOLAT ISYA", I: "Ust. M. Fahri", B: "Badal Kosong" }
+    { H: 5, J: "04:45", K: "SHOLAT SUBUH", I: "Ust. Ahmad Syakir", B: "Badal Kosong", B2: "Badal Kosong" },
+    { H: 5, J: "12:00", K: "SHOLAT JUM'AT", I: "Ust. KH. Ma'ruf", B: "Ust. Bashir", B2: "Badal Kosong" },
+    { H: 5, J: "15:15", K: "SHOLAT ASHAR", I: "Ust. Rahmat Hidayat", B: "Badal Kosong", B2: "Badal Kosong" },
+    { H: 5, J: "18:15", K: "SHOLAT MAGHRIB", I: "Ust. Dr. Syarifuddin", B: "Badal Kosong", B2: "Badal Kosong" },
+    { H: 5, J: "19:30", K: "SHOLAT ISYA", I: "Ust. M. Fahri", B: "Badal Kosong", B2: "Badal Kosong" }
 ];
 
 var tambahanMilidetik = 0;
@@ -147,8 +148,9 @@ function jalankanTV() {
     if (jadwalAktif) {
         areaKonten.innerHTML = "<div class='box'>" +
             "<h2>" + jadwalAktif.K + "</h2>" +
-            "<p>Imam: " + jadwalAktif.I + "</p>" +
-            "<p>Badal: " + jadwalAktif.B + "</p>" +
+            "<p>Imam : " + jadwalAktif.I + "</p>" +
+            "<p>Badal 1 : " + jadwalAktif.B + "</p>" +
+            "<p>Badal 2 : " + jadwalAktif.B2 + "</p>" +
         "</div>";
     } else {
         areaKonten.innerHTML = "<div class='siaga'>TULUSKAN NIAT, TEGAKKAN SHOLAT</div>";
@@ -169,8 +171,7 @@ window.onload = function() {
             document.getElementById("jam").innerHTML = j + ":" + m + ":<span class='kedip'>" + s + "</span> <span style='font-size:2vw;color:#ff3333;'>[SIMULASI]</span>";
         }
     }, 1000);
-};
+}
 </script>
-
 </body>
 </html>
