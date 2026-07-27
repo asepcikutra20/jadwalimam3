@@ -6,10 +6,22 @@
     <title>TV Masjid Al Muslim - Mode Fullscreen</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; overflow: hidden; height: 100vh; width: 100vw; }
+        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; overflow: hidden; height: 100vh; width: 100vw; position: relative; }
         
-        /* TOMBOL KONTROL SIMULASI JAM (Hanya untuk Tes) */
-        .panel-simulasi { background: #111; padding: 10px; border-radius: 10px; display: inline-block; margin-bottom: 20px; border: 1px dashed #444; position: relative; z-index: 999; }
+        /* TOMBOL KONTROL SIMULASI JAM (Desain Asli - Posisi di Bawah & Tersembunyi) */
+        .panel-simulasi { 
+            background: #111; 
+            padding: 10px; 
+            border-radius: 10px; 
+            border: 1px dashed #444; 
+            z-index: 999; 
+            position: fixed; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            margin-bottom: 0; 
+            display: none; /* Disembunyikan di awal */
+        }
         .panel-simulasi span { font-size: 14px; color: #aaa; margin-right: 10px; font-family: Arial; }
         .btn-sim { background: #222; color: #fff; border: 1px solid #555; padding: 6px 12px; margin: 0 4px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; }
         .btn-sim:hover { background: #00ff88; color: #000; border-color: #00ff88; }
@@ -39,20 +51,20 @@
             .box h2 { font-size: 26px; margin-bottom: 8px; }
             .box p { font-size: 18px; margin: 6px 0; }
             .siaga { font-size: 20px; margin-top: 50px; }
-            .panel-simulasi { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+            .panel-simulasi { width: 95%; flex-wrap: wrap; justify-content: center; gap: 5px; bottom: 10px; }
             .panel-simulasi span { width: 100%; margin-bottom: 5px; margin-right: 0; }
         }
     </style>
 </head>
-<body onclick="aktifkanLayarPenuh()">
+<body onclick="deteksiTripleTap()">
 
     <!-- PANEL TOMBOL UNTUK SIMULASI MAJUIN JAM -->
-    <div class="panel-simulasi" onclick="event.stopPropagation()">
+    <div id="panelSetting" class="panel-simulasi" onclick="event.stopPropagation()">
         <span>⚙️ KONTROL SIMULASI:</span>
         <button class="btn-sim" onclick="tambahJam(1)">+1 Jam</button>
         <button class="btn-sim" onclick="tambahMenit(5)">+5 Menit</button>
         <button class="btn-sim" onclick="tambahMenit(1)">+1 Menit</button>
-        <button class="btn-sim btn-reset" onclick="resetWaktuNyata()">Reset Waktu Nyata</button>
+        <button class="btn-sim btn-reset" onclick="resetWaktuNyata()">Reset</button>
     </div>
 
     <h1>MASJID AL MUSLIM</h1>
@@ -62,7 +74,6 @@
 
 <script>
 // --- DATA JADWAL SHOLAT PERMANEN ---
-// Ditambahkan properti B2 untuk menyimpan Badal 2
 var jadwalMasjid = [
     { H: 1, J: "04:45", K: "SHOLAT SUBUH", I: "Ust. Ahmad Syakir", B: "Badal Kosong", B2: "Badal Kosong" },
     { H: 1, J: "12:00", K: "SHOLAT DZUHUR", I: "Ust. H. Nurhalim", B: "Ust. Bashir", B2: "Badal Kosong" },
@@ -80,7 +91,6 @@ var jadwalMasjid = [
 var tambahanMilidetik = 0;
 var modeSimulasiAktif = false;
 
-// LOGIKA FULLSCREEN OTOMATIS SAAT LAYAR DIKLIK / DISENTUH
 function aktifkanLayarPenuh() {
     var doc = document.documentElement;
     if (!document.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
@@ -91,12 +101,51 @@ function aktifkanLayarPenuh() {
     }
 }
 
+// SHORTCUT PC (Ctrl + M)
+window.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        toggleSetting();
+    }
+});
+
+// TRIPLE TAP HANDLER (HP/Mouse)
+var jumlahKetukan = 0;
+var jedaKetukan;
+function deteksiTripleTap() {
+    aktifkanLayarPenuh(); 
+    jumlahKetukan++;
+    clearTimeout(jedaKetukan);
+    jedaKetukan = setTimeout(function() { jumlahKetukan = 0; }, 400);
+    if (jumlahKetukan === 3) {
+        toggleSetting();
+        jumlahKetukan = 0;
+    }
+}
+
+// FIXED TOGGLE METHOD (No CSS Inheritance Glitch)
+function toggleSetting() {
+    var panel = document.getElementById("panelSetting");
+    var gayaSekarang = window.getComputedStyle(panel).display;
+    
+    if (gayaSekarang === "none") {
+        if (window.innerWidth <= 768) {
+            panel.style.display = "flex";
+        } else {
+            panel.style.display = "inline-block";
+        }
+    } else {
+        panel.style.display = "none";
+    }
+}
+
 function tambahJam(jumlahJam) {
     tambahanMilidetik += jumlahJam * 60 * 60 * 1000;
     modeSimulasiAktif = true;
     jalankanTV();
 }
 
+// FIXED: Added missing minutes translation to keep simulation running smoothly
 function tambahMenit(jumlahMenit) {
     tambahanMilidetik += jumlahMenit * 60 * 1000;
     modeSimulasiAktif = true;
@@ -165,13 +214,14 @@ window.onload = function() {
         } else {
             var waktuMurni = new Date();
             var waktu = new Date(waktuMurni.getTime() + tambahanMilidetik);
-            var s = String(waktu.getSeconds()).padStart(2, '0');
             var j = String(waktu.getHours()).padStart(2, '0');
             var m = String(waktu.getMinutes()).padStart(2, '0');
-            document.getElementById("jam").innerHTML = j + ":" + m + ":<span class='kedip'>" + s + "</span> <span style='font-size:2vw;color:#ff3333;'>[SIMULASI]</span>";
+            var s = String(waktu.getSeconds()).padStart(2, '0');
+            var penandaSimulasi = modeSimulasiAktif ? " <span style='font-size:2vw;color:#ff3333;'>[SIMULASI]</span>" : "";
+            document.getElementById("jam").innerHTML = j + ":" + m + ":<span class='kedip'>" + s + "</span>" + penandaSimulasi;
         }
     }, 1000);
-}
+};
 </script>
 </body>
 </html>
