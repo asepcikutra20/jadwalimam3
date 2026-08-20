@@ -1,10 +1,10 @@
 const CACHE_NAME = 'simulasi-imam-cache-v1';
 const assets = [
   '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  'index.html',
+  'manifest.json',
+  'icon-192.png',
+  'icon-512.png'
 ];
 
 // Tahap Install: Menyimpan file penting ke dalam cache HP
